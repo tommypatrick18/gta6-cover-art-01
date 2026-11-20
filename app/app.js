@@ -39,16 +39,17 @@ const GRADES = [
     title: ["#5b2a86", "#8e44ad", "#ff7e3d", "#d6336c", "#5b2a86"], tagline: "#d6336c", frame: "#8e44ad" },
 ];
 
-// Role, place, time and boast defaults, written for the two sample photos.
-// Every panel gets its own micro-story: PLACE · TIME · BOAST.
+// Role, place, time and boast defaults, written for the seven sample photos:
+// one photo per panel, so no face repeats. Every panel gets its own
+// micro-story: PLACE · TIME · BOAST.
 const PANEL_DEFAULTS = [
   { role: "THE GETAWAY", place: "OCEAN BOULEVARD", time: "6:47 PM", boast: "DRIVES INTO THE SUNSET" },
   { role: "THE OLD SALT", place: "NORTH PIER", time: "9:12 AM", boast: "NEVER MISSES A CATCH" },
-  { role: "THE LOOKOUT", place: "PALM ROW", time: "7:03 PM", boast: "SEES EVERYTHING" },
-  { role: "THE TIDE CALLER", place: "HARBOR LIGHTS", time: "8:20 PM", boast: "KNOWS EVERY CURRENT" },
-  { role: "THE NIGHT OWL", place: "SUNSET STRIP", time: "8:45 PM", boast: "OWNS THE GOLDEN HOUR" },
-  { role: "THE REEL DEAL", place: "SOUTH DOCK", time: "5:30 AM", boast: "FIRST CAST, LAST WORD" },
-  { role: "THE HIGH LIFE", place: "SKYLINE DECK", time: "9:40 PM", boast: "ABOVE IT ALL" },
+  { role: "THE TIDE RIDER", place: "SUNSET BEACH", time: "6:15 PM", boast: "RIDES EVERY WAVE" },
+  { role: "THE COMMODORE", place: "MARINA BAY", time: "8:05 PM", boast: "OWNS EVERY BERTH" },
+  { role: "THE NIGHT RUNNER", place: "NEON ROW", time: "11:20 PM", boast: "KNOWS EVERY ALLEY" },
+  { role: "THE SKYLINE", place: "ROOFTOP 9", time: "9:40 PM", boast: "ABOVE IT ALL" },
+  { role: "THE WHEELMAN", place: "CRUISE MILE", time: "7:30 PM", boast: "NEVER STOPS FOR RED" },
 ];
 
 const state = {
@@ -146,13 +147,29 @@ function loadImage(src) {
   });
 }
 
+// Face points for the shipped samples, measured from the photos themselves:
+// the skin-cluster finder drifts on tall portraits (it pulls toward neck
+// and shoulders), so the samples carry their own face point. User photos
+// still go through findFacePoint in addPhoto.
+const SAMPLE_FACES = {
+  boulevard: { fx: 0.42, fy: 0.16 },
+  pier: { fx: 0.50, fy: 0.30 },
+  beach: { fx: 0.50, fy: 0.50 },
+  marina: { fx: 0.55, fy: 0.34 },
+  street: { fx: 0.50, fy: 0.49 },
+  rooftop: { fx: 0.50, fy: 0.50 },
+  car: { fx: 0.52, fy: 0.34 },
+};
+
 async function loadSamples() {
-  const names = ["boulevard", "pier"];
+  const names = ["boulevard", "pier", "beach", "marina", "street", "rooftop", "car"];
   for (const name of names) {
     if (state.photos.some((p) => p.name === name)) continue;
     try {
       const img = await loadImage(`samples/${name}.jpg`);
-      addPhoto(img, name);
+      const photo = addPhoto(img, name);
+      const known = SAMPLE_FACES[name];
+      if (known) { photo.fx = known.fx; photo.fy = known.fy; }
     } catch (e) { /* sample missing: keep going */ }
   }
   rebuildPanels();
@@ -201,7 +218,7 @@ function computeLayout(W, H, count) {
   const m = Math.round(W * 0.018);
   const gap = Math.max(4, Math.round(W * 0.006));
   const topH = Math.round(H * 0.075);
-  const titleH = Math.round(H * 0.175);
+  const titleH = Math.round(H * 0.15);
   const footH = Math.round(H * 0.085);
   const panelsY = m + topH + gap;
   const panelsH = H - m * 2 - topH - titleH - footH - gap * 3;
@@ -504,10 +521,11 @@ function renderPoster(c, W, H) {
   c.stroke();
 
   const titleMaxW = W - L.m * 2 - 40;
-  const titleSize = fitFont(c, state.title, "Anton", titleMaxW, Math.round(L.titleH * 0.42) * titleScale());
+  const titleSize = fitFont(c, state.title, "Anton", titleMaxW, Math.round(L.titleH * 0.54) * titleScale());
   c.font = `${titleSize}px "Anton"`;
-  if ("letterSpacing" in c) c.letterSpacing = `${Math.max(1, titleSize * 0.02)}px`;
-  const titleY = bandY + L.titleH * 0.36;
+  const tracking = Math.max(1, titleSize * 0.08);
+  if ("letterSpacing" in c) c.letterSpacing = `${tracking}px`;
+  const titleY = bandY + L.titleH * 0.35;
   const grad = stripeGradient(c, 0, titleY - titleSize * 0.55, 0, titleY + titleSize * 0.45, g.title);
   c.textAlign = "center";
   c.textBaseline = "middle";
@@ -516,11 +534,29 @@ function renderPoster(c, W, H) {
   c.strokeText(state.title, W / 2, titleY);
   c.fillStyle = grad;
   c.fillText(state.title, W / 2, titleY);
+  // Gold stars flank the title so the band reads full, not empty: three on
+  // each side, measured from the title's own width including its tracking.
+  const titleW = c.measureText(state.title).width + tracking * (state.title.length - 1);
+  const flankSize = Math.round(titleSize * 0.30);
+  const flankGap = Math.round(titleSize * 0.35);
+  c.font = `${flankSize}px system-ui, sans-serif`;
+  c.fillStyle = g.frame;
+  c.shadowColor = "rgba(245,185,66,0.8)";
+  c.shadowBlur = Math.max(6, flankSize * 0.4);
+  c.textAlign = "right";
+  for (let i = 0; i < 3; i++) {
+    c.fillText("★", W / 2 - titleW / 2 - flankGap - i * flankSize * 1.25, titleY);
+  }
+  c.textAlign = "left";
+  for (let i = 0; i < 3; i++) {
+    c.fillText("★", W / 2 + titleW / 2 + flankGap + i * flankSize * 1.25, titleY);
+  }
+  c.shadowBlur = 0;
   if ("letterSpacing" in c) c.letterSpacing = "0px";
 
   // Neon script tagline under the title, glowing. It sits clear of the
   // wanted chip, which lives at the very bottom of the band.
-  const tagSize = Math.max(14, Math.round(L.titleH * 0.20));
+  const tagSize = Math.max(14, Math.round(L.titleH * 0.19));
   c.font = `${tagSize}px "Yellowtail"`;
   c.fillStyle = g.tagline;
   c.shadowColor = g.tagline;

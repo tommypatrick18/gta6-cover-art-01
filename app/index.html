@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vice Heat — Cover Studio</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <header id="topbar">
+    <div class="brand">
+      <span class="brand-mark">★</span>
+      <span class="brand-name">VICE HEAT</span>
+      <span class="brand-sub">Cover Studio</span>
+    </div>
+    <div class="wanted-box" id="wantedBox" title="Wanted level rebuilds the poster">
+      <span class="wanted-label">WANTED LEVEL</span>
+      <span class="wanted-stars" id="wantedStars"></span>
+      <span class="wanted-word" id="wantedWord"></span>
+    </div>
+  </header>
+
+  <main id="workspace">
+    <section id="stage">
+      <canvas id="poster" width="1920" height="1080"></canvas>
+      <div id="stageHint">Click a panel to select it · drag the photo to reposition · scroll to zoom</div>
+      <div id="sizeRow">
+        <span class="row-label">Export size</span>
+        <button class="size-btn" data-size="1080x1080">1080 × 1080</button>
+        <button class="size-btn" data-size="1080x1350">1080 × 1350</button>
+        <button class="size-btn active" data-size="1920x1080">1920 × 1080</button>
+        <button id="exportBtn" class="primary">Export PNG</button>
+      </div>
+    </section>
+
+    <aside id="controls">
+      <section class="card" id="photosCard">
+        <h2>1 · Photos</h2>
+        <p class="note">Photos stay on your machine — nothing is ever uploaded.</p>
+        <div class="btn-row">
+          <label class="btn" for="fileInput">Add photos…</label>
+          <input type="file" id="fileInput" accept="image/*" multiple hidden>
+          <button id="samplesBtn" class="btn">Load samples</button>
+        </div>
+        <div id="photoList" class="thumbs"></div>
+      </section>
+
+      <section class="card" id="captionCard">
+        <h2>2 · Title &amp; caption</h2>
+        <label class="field">Title
+          <input id="titleInput" type="text" value="VICE HEAT" maxlength="24">
+        </label>
+        <label class="field">Tagline
+          <input id="taglineInput" type="text" value="MOST WANTED" maxlength="48">
+        </label>
+        <label class="field">Quote
+          <input id="quoteInput" type="text" value="THE COAST HAS NEVER LOOKED THIS GOOD" maxlength="64">
+        </label>
+        <label class="field">Quote source
+          <input id="quoteByInput" type="text" value="THE VICE HERALD" maxlength="40">
+        </label>
+      </section>
+
+      <section class="card" id="gradeCard">
+        <h2>3 · Colour grade</h2>
+        <div id="gradeList" class="swatches"></div>
+        <p class="note" id="gradeNote"></p>
+      </section>
+
+      <section class="card" id="panelsCard">
+        <h2>4 · Panels &amp; cast</h2>
+        <p class="note">Wanted level sets the panel count. Each panel gets a role and a
+        micro-story — place, time and one boast — like a movie cast list.</p>
+        <div id="panelList"></div>
+      </section>
+
+      <section class="card" id="footerCard">
+        <h2>5 · Footer</h2>
+        <label class="field">Studio line
+          <input id="studioInput" type="text" value="A VICE HEAT PICTURES PRODUCTION" maxlength="64">
+        </label>
+        <label class="field">Volume
+          <input id="volInput" type="text" value="VOL. 1" maxlength="12">
+        </label>
+        <label class="check"><input id="comingSoonInput" type="checkbox" checked> Show “COMING SOON”</label>
+        <label class="check"><input id="sealInput" type="checkbox" checked> Show gold seal</label>
+      </section>
+    </aside>
+  </main>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

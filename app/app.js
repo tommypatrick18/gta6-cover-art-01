@@ -218,7 +218,7 @@ function computeLayout(W, H, count) {
   const m = Math.round(W * 0.018);
   const gap = Math.max(4, Math.round(W * 0.006));
   const topH = Math.round(H * 0.075);
-  const titleH = Math.round(H * 0.15);
+  const titleH = Math.round(H * 0.10);
   const footH = Math.round(H * 0.085);
   const panelsY = m + topH + gap;
   const panelsH = H - m * 2 - topH - titleH - footH - gap * 3;
@@ -295,6 +295,12 @@ function stripeGradient(c, x0, y0, x1, y1, colors) {
   return g;
 }
 
+// Hex colour to rgba(), for the warm glow in the title band.
+function hexA(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+
 function drawCoverPhoto(c, photo, rect, panel) {
   const img = photo.img;
   const iw = img.naturalWidth, ih = img.naturalHeight;
@@ -319,7 +325,6 @@ function drawCoverPhoto(c, photo, rect, panel) {
 }
 
 function drawPanelChrome(c, rect, panel, index) {
-  const g = grade();
   const r = Math.max(3, rect.w * 0.008);
   c.save();
   roundRectPath(c, rect.x, rect.y, rect.w, rect.h, r);
@@ -357,14 +362,6 @@ function drawPanelChrome(c, rect, panel, index) {
   const story = `${panel.place} · ${panel.time} · ${panel.boast}`;
   c.fillText(story, rect.x + pad, rect.y + rect.h - pad - storySize * 0.4, rect.w - pad * 2);
   c.shadowBlur = 0;
-  // Small gold corner tick, the poster's signature detail.
-  c.strokeStyle = g.frame;
-  c.lineWidth = Math.max(2, rect.w * 0.008);
-  c.beginPath();
-  c.moveTo(rect.x + pad, rect.y + pad + 10);
-  c.lineTo(rect.x + pad, rect.y + pad);
-  c.lineTo(rect.x + pad + 10, rect.y + pad);
-  c.stroke();
 }
 
 function drawStars(c, x, y, size, filled) {
@@ -513,6 +510,13 @@ function renderPoster(c, W, H) {
   bandGrad.addColorStop(1, "rgba(30,10,40,0.92)");
   c.fillStyle = bandGrad;
   c.fillRect(L.m, bandY, W - L.m * 2, L.titleH);
+  // Warm glow behind the title, in the grade's tint, so the shorter band
+  // reads as sunset, not as an empty dark slab.
+  const glow = c.createRadialGradient(W / 2, bandY + L.titleH * 0.42, 0, W / 2, bandY + L.titleH * 0.42, W * 0.34);
+  glow.addColorStop(0, hexA(g.tint, 0.22));
+  glow.addColorStop(1, hexA(g.tint, 0));
+  c.fillStyle = glow;
+  c.fillRect(L.m, bandY, W - L.m * 2, L.titleH);
   c.strokeStyle = "rgba(245,185,66,0.7)";
   c.lineWidth = 2;
   c.beginPath();
@@ -521,11 +525,11 @@ function renderPoster(c, W, H) {
   c.stroke();
 
   const titleMaxW = W - L.m * 2 - 40;
-  const titleSize = fitFont(c, state.title, "Anton", titleMaxW, Math.round(L.titleH * 0.54) * titleScale());
+  const titleSize = fitFont(c, state.title, "Anton", titleMaxW, Math.round(L.titleH * 0.62) * titleScale());
   c.font = `${titleSize}px "Anton"`;
   const tracking = Math.max(1, titleSize * 0.08);
   if ("letterSpacing" in c) c.letterSpacing = `${tracking}px`;
-  const titleY = bandY + L.titleH * 0.35;
+  const titleY = bandY + L.titleH * 0.36;
   const grad = stripeGradient(c, 0, titleY - titleSize * 0.55, 0, titleY + titleSize * 0.45, g.title);
   c.textAlign = "center";
   c.textBaseline = "middle";
@@ -554,26 +558,35 @@ function renderPoster(c, W, H) {
   c.shadowBlur = 0;
   if ("letterSpacing" in c) c.letterSpacing = "0px";
 
-  // Neon script tagline under the title, glowing. It sits clear of the
-  // wanted chip, which lives at the very bottom of the band.
-  const tagSize = Math.max(14, Math.round(L.titleH * 0.19));
+  // Neon script tagline and the wanted chip share one row under the title,
+  // centred as a group, so the shorter band stays full: the chip still
+  // names the wanted level, in words.
+  const chipText = `WANTED LEVEL ${state.wanted} — ${LEVEL_WORDS[state.wanted]}`;
+  const chipH = Math.max(12, Math.round(L.titleH * 0.17));
+  const chipFont = Math.max(10, Math.round(chipH * 0.62));
+  c.font = `700 ${chipFont}px system-ui, sans-serif`;
+  const chipW = c.measureText(chipText).width + 20;
+  const tagSize = Math.max(14, Math.round(L.titleH * 0.21));
   c.font = `${tagSize}px "Yellowtail"`;
+  const tagW = c.measureText(state.tagline).width;
+  const rowGap = Math.max(12, Math.round(L.titleH * 0.14));
+  const rowW = tagW + rowGap + chipW;
+  const rowY = bandY + L.titleH * 0.80;
+  const rowX = W / 2 - rowW / 2;
+  c.textAlign = "left";
+  c.textBaseline = "middle";
   c.fillStyle = g.tagline;
   c.shadowColor = g.tagline;
   c.shadowBlur = Math.max(8, tagSize * 0.5);
-  c.fillText(state.tagline, W / 2, bandY + L.titleH * 0.72);
+  c.fillText(state.tagline, rowX, rowY);
   c.shadowBlur = 0;
-
-  // Wanted chip in the title band: the level, in words.
-  const chipText = `WANTED LEVEL ${state.wanted} — ${LEVEL_WORDS[state.wanted]}`;
-  const chipH = Math.max(12, Math.round(L.titleH * 0.13));
-  c.font = `700 ${Math.max(10, Math.round(chipH * 0.62))}px system-ui, sans-serif`;
-  const chipW = c.measureText(chipText).width + 20;
   c.fillStyle = "rgba(255,90,60,0.9)";
-  roundRectPath(c, W / 2 - chipW / 2, bandY + L.titleH - chipH - 4, chipW, chipH, 3);
+  roundRectPath(c, rowX + tagW + rowGap, rowY - chipH / 2, chipW, chipH, 3);
   c.fill();
+  c.font = `700 ${chipFont}px system-ui, sans-serif`;
   c.fillStyle = "#ffffff";
-  c.fillText(chipText, W / 2, bandY + L.titleH - chipH / 2 - 2);
+  c.textAlign = "center";
+  c.fillText(chipText, rowX + tagW + rowGap + chipW / 2, rowY + 1);
 
   // Footer: COMING SOON, billing block, barcode, gold seal. The billing
   // lines shrink to fit the space between COMING SOON and the seal/barcode.

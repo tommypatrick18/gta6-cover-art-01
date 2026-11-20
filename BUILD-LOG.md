@@ -146,3 +146,53 @@ Dua kelemahan unanim evaluator, dan hanya dua ini yang diperbaiki:
 
 ### Tidak dilakukan (milik Kimo main)
 - Tidak ada submit, kuota, README/About, klaim. Recording STRICT masih jalan.
+
+## Fix 2 — polish band judul (20 Nov ~19:30 WIB, fixer session 2)
+
+Blind test round 2 LULUS (kita 57,00 vs Top 5 57,33). Satu kelemahan sisa,
+disebut ketiga evaluator: band judul gelap di bawah grid foto terlalu
+besar/kosong — sekitar sepertiga poster jadi ruang navy kosong. Hanya ini
+yang diperbaiki (foto, role tag, grade, editor tidak disentuh):
+
+### 1. Band judul diperkecil + diisi bermakna
+- titleH 0,15H -> 0,10H (band menyusut sepertiga); ruangnya kembali ke grid
+  foto/hero — panel tumbuh ~8% lebih tinggi, wajah di panel kecil ikut
+  membesar. Total area gelap non-foto (top strip + band + footer) turun dari
+  ~31% ke ~26% tinggi poster.
+- Judul tetap besar: faktor 0,54 -> 0,62 dari titleH (di 1080p: ~80 px,
+  tetap teks terbesar di poster), posisi 0,36 — tidak menyentuh tepi band,
+  tidak menutupi wajah.
+- Tagline + chip kini SATU baris di bawah judul, terpusat sebagai grup
+  (tagline neon "MOST WANTED" + chip merah "WANTED LEVEL 5 — MOST WANTED"),
+  bukan dua baris bertumpuk — band yang lebih pendek tetap terisi penuh.
+  Bintang emas 3+3 di tiap sisi judul dipertahankan.
+- Band dihangatkan: radial glow lembut warna tint grade di belakang judul
+  (helper baru hexA), jadi band terbaca sebagai sunset, bukan slab navy
+  kosong. Semua furniture dipertahankan (kutipan, segel, billing, barcode,
+  VOL. 1, COMING SOON).
+
+### 2. Artefak sudut panel dibersihkan
+- Penyebab ketemu: "gold corner tick" di drawPanelChrome — detail sengaja
+  yang digambar di sudut kiri-atas SETIAP panel; di ukuran export ia terbaca
+  sebagai artefak kuning kecil (dilaporkan evaluator round 2). Dihapus
+  total; panel sudah punya border chrome putih. `const g = grade();` yang
+  hanya dipakai tick itu ikut dihapus.
+
+### Verifikasi (semua PASS)
+- node --check app/app.js OK; tidak ada referensi network baru di kode app
+  (hanya URL di teks lisensi OFL, seperti sebelumnya).
+- 4 screenshot di-render ulang via headless Chromium (cara yang sama seperti
+  v1/Fix 1, server lokal port 8941, dimatikan via PID setelah selesai):
+  01-cover 1280x720 175.678 B; 02-editor 1280x800 178.276 B; 03-square
+  1024x1024 202.504 B; 04-portrait 1024x1280 233.909 B (q80) — semua
+  ≤256 KiB, sisi panjang ≤1280, sisi pendek ≥480. Keempatnya dilihat:
+  band judul terisi (judul + bintang + tagline + chip satu baris), tidak ada
+  teks terpotong (zoom 2x pada band landscape + square), semua garis
+  micro-story terbaca penuh, wajah hero utuh di ketiga layout cover, corner
+  tick hilang dari semua panel.
+- MAKEFUN_OUTPUT_DIR=/tmp/out-fix2a dan /tmp/out-fix2b -> byte-identical
+  (diff -r bersih); dossier.json schema makefun/dossier/v1, 4 images,
+  cover 0.
+
+### Tidak dilakukan (milik Kimo main)
+- Tidak ada submit, kuota, README/About, klaim. Recording STRICT masih jalan.
